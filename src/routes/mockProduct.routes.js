@@ -87,10 +87,7 @@ router.get('/:id', async (req, res) => {
       : 500;
 
     await wait(delayMs);
-    return res.status(200).json({
-      ...baseProduct,
-      _meta: { simulatedDelayMs: delayMs }
-    });
+    return res.status(200).json(baseProduct);
   }
 
   // Default: Healthy 200 OK response with the expected schema

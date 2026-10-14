@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const healthRoutes = require('./routes/health.routes');
 const mockProductRoutes = require('./routes/mockProduct.routes');
+const checkRoutes = require('./routes/check.routes');
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/checks', checkRoutes);
 app.use('/mock-api/products', mockProductRoutes);
 
 // Fallback 404 handler for unknown routes
