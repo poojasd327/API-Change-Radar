@@ -2,6 +2,7 @@ require('dotenv').config();
 const app = require('./app');
 const { connectDB, disconnectDB } = require('./config/db');
 const { seedDemoData } = require('./scripts/seed');
+const { startScheduler, stopScheduler } = require('./services/scheduler.service');
 
 const PORT = process.env.PORT || 5001;
 
@@ -18,9 +19,13 @@ async function startServer() {
     console.log(`[APIChange Radar] Health check: http://localhost:${PORT}/api/health`);
   });
 
+  // 4. Start the automatic monitoring scheduler
+  startScheduler();
+
   // Graceful shutdown helper
   const gracefulShutdown = (signal) => {
-    console.log(`[APIChange Radar] ${signal} received. Closing HTTP server...`);
+    console.log(`[APIChange Radar] ${signal} received. Closing HTTP server and stopping scheduler...`);
+    stopScheduler();
     server.close(async () => {
       console.log('[APIChange Radar] HTTP server closed.');
       await disconnectDB();

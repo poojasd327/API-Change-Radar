@@ -33,10 +33,12 @@ function formatSchemaErrors(ajvErrors) {
  * @param {Object} options
  * @param {string} options.url - The target URL to check.
  * @param {number} [options.timeoutMs=3000] - Request timeout limit in milliseconds.
- * @param {Function} [options.validator=validateProduct] - Compiled Ajv validation function.
+ * @param {Function} [options.validator] - Compiled Ajv validation function.
+ * @param {Object} [options.schema] - Optional JSON Schema object to validate against.
  * @returns {Promise<Object>} Structured check result.
  */
-async function runProductCheck({ url, timeoutMs = 3000, validator = validateProduct }) {
+async function runProductCheck({ url, timeoutMs = 3000, validator = null, schema = null }) {
+  const activeValidator = validator || (schema ? ajv.compile(schema) : validateProduct);
   const checkedAt = new Date().toISOString();
   const startTime = performance.now();
 
@@ -80,10 +82,10 @@ async function runProductCheck({ url, timeoutMs = 3000, validator = validateProd
     }
 
     // 3. Validate against the approved JSON Schema contract using Ajv
-    const isSchemaValid = Boolean(validator(responseBody));
+    const isSchemaValid = Boolean(activeValidator(responseBody));
 
     if (!isSchemaValid) {
-      const schemaErrors = formatSchemaErrors(validator.errors);
+      const schemaErrors = formatSchemaErrors(activeValidator.errors);
       return {
         status: 'failed',
         failureType: 'SCHEMA_VIOLATION',
