@@ -89,6 +89,21 @@ async function runScheduledChecks(options = {}) {
           }
         }
 
+        // Support optional test scenario override (via SCHEDULER_TEST_SCENARIO or options)
+        const testScenario = options.testScenario !== undefined
+          ? options.testScenario
+          : process.env.SCHEDULER_TEST_SCENARIO;
+
+        if (testScenario && typeof testScenario === 'string' && testScenario.trim() !== '') {
+          try {
+            const parsedUrl = new URL(targetUrl);
+            parsedUrl.searchParams.set('scenario', testScenario.trim());
+            targetUrl = parsedUrl.toString();
+          } catch {
+            // Keep targetUrl as is if parsing fails
+          }
+        }
+
         // Run detection engine with this contract's approved JSON schema
         const checkResult = await runProductCheck({
           url: targetUrl,
