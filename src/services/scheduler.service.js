@@ -4,6 +4,7 @@ const Endpoint = require('../models/Endpoint');
 const Contract = require('../models/Contract');
 const CheckRun = require('../models/CheckRun');
 const { runProductCheck } = require('./detectionEngine.service');
+const { recordIncidentFailure, resolveEndpointIncidents } = require('./incident.service');
 
 // Default cron schedule: Every 5 minutes
 const DEFAULT_CRON_SCHEDULE = '*/5 * * * *';
@@ -114,6 +115,22 @@ async function runScheduledChecks(options = {}) {
         } else {
           summary.failed++;
           console.error(`[Scheduler] FAILED: "${endpoint.name}" [${checkResult.failureType}] - ${checkResult.errors.join('; ')} [Run ID: ${checkRunDoc._id}]`);
+        }
+
+        // 5. Incident lifecycle management: update/create on failure, auto-resolve on recovery
+        try {
+          if (checkResult.status === 'healthy') {
+            await resolveEndpointIncidents({ endpointId: endpoint._id });
+          } else {
+            await recordIncidentFailure({
+              endpoint,
+              contract,
+              checkResult
+            });
+          }
+        } catch (incidentErr) {
+          // Incident handling errors are isolated and must never stop monitoring of other endpoints
+          console.error(`[Scheduler] Incident processing error for "${endpoint.name}": ${incidentErr.message}`);
         }
 
         summary.results.push({
