@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const checkRunSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true
+    },
     endpoint: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Endpoint',
@@ -54,6 +60,8 @@ const checkRunSchema = new mongoose.Schema(
 // Indexes for high-performance history querying (sorted newest first)
 checkRunSchema.index({ checkedAt: -1 });
 checkRunSchema.index({ endpoint: 1, checkedAt: -1 });
+checkRunSchema.index({ userId: 1, checkedAt: -1 });
+checkRunSchema.index({ userId: 1, endpoint: 1, checkedAt: -1 });
 
 const CheckRun = mongoose.model('CheckRun', checkRunSchema);
 

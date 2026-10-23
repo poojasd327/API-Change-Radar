@@ -2,12 +2,16 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Incident = require('../models/Incident');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// Protect all incident routes with authentication
+router.use(requireAuth);
 
 const ALLOWED_STATUSES = ['open', 'resolved'];
 
 /**
  * GET /api/incidents
- * List incidents, sorted by newest activity (lastSeenAt: -1).
+ * List incidents owned by the authenticated user, sorted by newest activity (lastSeenAt: -1).
  *
  * Query Parameters:
  * - status: 'open' | 'resolved' (optional filter)
@@ -23,7 +27,8 @@ router.get('/', async (req, res, next) => {
       });
     }
 
-    const filter = {};
+    // Strictly scope all queries to the authenticated user
+    const filter = { userId: req.userId };
 
     // 1. Validate optional status query parameter
     if (req.query.status !== undefined) {
@@ -63,7 +68,7 @@ router.get('/', async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
-    // 4. Query incidents and count in parallel
+    // 4. Query incidents and count in parallel, scoped strictly to req.userId
     const [total, records] = await Promise.all([
       Incident.countDocuments(filter),
       Incident.find(filter)
@@ -96,7 +101,7 @@ router.get('/', async (req, res, next) => {
 
 /**
  * GET /api/incidents/:id
- * Retrieve a single incident by its MongoDB ObjectId.
+ * Retrieve a single incident by its MongoDB ObjectId, scoped strictly to the authenticated user.
  */
 router.get('/:id', async (req, res, next) => {
   try {
@@ -117,7 +122,8 @@ router.get('/:id', async (req, res, next) => {
       });
     }
 
-    const incident = await Incident.findById(id)
+    // Enforce ownership: only return incident if it belongs to req.userId
+    const incident = await Incident.findOne({ _id: id, userId: req.userId })
       .select('-__v')
       .populate('endpoint', 'name url method')
       .populate('contract', 'name version')

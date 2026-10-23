@@ -28,19 +28,22 @@ function formatIncidentTitle(failureType, endpointName = 'Endpoint', httpStatus 
 /**
  * Handle a failed check: find and update an existing OPEN incident,
  * or create a new OPEN incident if none exists for this endpoint and failure type.
+ * Ensures the incident is correctly scoped to the endpoint owner.
  *
  * @param {Object} options
- * @param {Object} options.endpoint - The endpoint document ({ _id, name, ... })
+ * @param {Object} options.endpoint - The endpoint document ({ _id, name, userId, ... })
  * @param {Object} [options.contract] - The associated contract document ({ _id, ... })
  * @param {Object} options.checkResult - Result from detectionEngine ({ failureType, httpStatus, errors, ... })
+ * @param {string|mongoose.Types.ObjectId} [options.userId] - Optional owner ID override
  * @returns {Promise<Object>} The created or updated Incident document
  */
-async function recordIncidentFailure({ endpoint, contract = null, checkResult }) {
+async function recordIncidentFailure({ endpoint, contract = null, checkResult, userId = null }) {
   if (!endpoint || !endpoint._id) {
     throw new Error('Endpoint document with _id is required to record an incident');
   }
 
   const endpointId = endpoint._id;
+  const ownerId = userId || endpoint.userId || null;
   const failureType = checkResult.failureType || 'UNKNOWN_FAILURE';
   const errorDescription = Array.isArray(checkResult.errors) && checkResult.errors.length > 0
     ? checkResult.errors.join('; ')
@@ -48,28 +51,39 @@ async function recordIncidentFailure({ endpoint, contract = null, checkResult })
   const now = new Date();
   const contractId = contract ? contract._id : null;
 
-  // 1. Try to find and atomically update an existing OPEN incident for this endpoint and failure type
+  // 1. Try to find and atomically update an existing OPEN incident for this endpoint, owner, and failure type
+  const queryFilter = {
+    endpoint: endpointId,
+    failureType,
+    status: 'open'
+  };
+  if (ownerId) {
+    queryFilter.userId = ownerId;
+  }
+
+  const updateFields = {
+    lastSeenAt: now,
+    description: errorDescription,
+    contract: contractId
+  };
+  if (ownerId) {
+    updateFields.userId = ownerId;
+  }
+
   let incident = await Incident.findOneAndUpdate(
+    queryFilter,
     {
-      endpoint: endpointId,
-      failureType,
-      status: 'open'
-    },
-    {
-      $set: {
-        lastSeenAt: now,
-        description: errorDescription,
-        contract: contractId
-      },
+      $set: updateFields,
       $inc: { occurrenceCount: 1 }
     },
     { returnDocument: 'after' }
   );
 
-  // 2. If no OPEN incident exists, create a new one
+  // 2. If no OPEN incident exists, create a new one with ownerId
   if (!incident) {
     const title = formatIncidentTitle(failureType, endpoint.name, checkResult.httpStatus);
     incident = await Incident.create({
+      userId: ownerId,
       endpoint: endpointId,
       contract: contractId,
       status: 'open',
@@ -90,27 +104,29 @@ async function recordIncidentFailure({ endpoint, contract = null, checkResult })
 
 /**
  * Auto-resolve all open incidents for an endpoint after a healthy check.
- *
- * Recovery Policy:
- * In this initial version, a single healthy check immediately resolves all active open incidents
- * for the endpoint, setting status to 'resolved' and resolvedAt to the current timestamp.
- * Already resolved incidents are never modified.
+ * Strictly respects user ownership so resolving one endpoint never crosses user boundaries.
  *
  * @param {Object} options
  * @param {string|mongoose.Types.ObjectId} options.endpointId - Endpoint ID whose open incidents should resolve
+ * @param {string|mongoose.Types.ObjectId} [options.userId] - Optional owner ID to enforce ownership scoping
  * @returns {Promise<Object>} { resolvedCount: number, resolvedAt: Date }
  */
-async function resolveEndpointIncidents({ endpointId }) {
+async function resolveEndpointIncidents({ endpointId, userId = null }) {
   if (!endpointId) {
     throw new Error('endpointId is required to resolve incidents');
   }
 
   const now = new Date();
+  const filter = {
+    endpoint: endpointId,
+    status: 'open'
+  };
+  if (userId) {
+    filter.userId = userId;
+  }
+
   const result = await Incident.updateMany(
-    {
-      endpoint: endpointId,
-      status: 'open'
-    },
+    filter,
     {
       $set: {
         status: 'resolved',

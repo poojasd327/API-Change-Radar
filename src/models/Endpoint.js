@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const endpointSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true
+    },
     name: {
       type: String,
       required: [true, 'Endpoint name is required'],
@@ -27,8 +33,11 @@ const endpointSchema = new mongoose.Schema(
   }
 );
 
-// Helpful index on isActive and name
+// Helpful indexes for scoped queries
 endpointSchema.index({ isActive: 1 });
+endpointSchema.index({ userId: 1, isActive: 1 });
+endpointSchema.index({ userId: 1, name: 1 });
+endpointSchema.index({ userId: 1, url: 1 });
 
 const Endpoint = mongoose.model('Endpoint', endpointSchema);
 

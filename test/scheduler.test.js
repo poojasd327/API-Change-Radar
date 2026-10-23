@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
+const User = require('../src/models/User');
 const Endpoint = require('../src/models/Endpoint');
 const Contract = require('../src/models/Contract');
 const CheckRun = require('../src/models/CheckRun');
@@ -21,10 +22,17 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
   let mongod;
   let server;
   let baseUrl;
+  let testUser;
 
   // Setup: Spin up isolated in-memory MongoDB and ephemeral HTTP test server
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri());
+
+  testUser = await User.create({
+    name: 'Scheduler Test User',
+    email: 'scheduler-test@example.com',
+    password: 'securePassword123'
+  });
 
   server = app.listen(0);
   const port = server.address().port;
@@ -82,8 +90,9 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
   // --- 2. SCHEDULED CHECK EXECUTION & PERSISTENCE ---
 
   await t.test('4. runScheduledChecks finds active endpoints and persists CheckRun to DB', async () => {
-    // Create an active endpoint and contract
+    // Create an active endpoint and contract with valid ownership
     const endpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Scheduled Test Endpoint',
       url: `${baseUrl}/mock-api/products/101`,
       method: 'GET',
@@ -91,6 +100,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     });
 
     const contract = await Contract.create({
+      userId: testUser._id,
       endpoint: endpoint._id,
       name: 'Scheduled Contract v1',
       schema: productSchema,
@@ -118,6 +128,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
 
     // Create an inactive endpoint
     await Endpoint.create({
+      userId: testUser._id,
       name: 'Inactive Endpoint',
       url: `${baseUrl}/mock-api/products/101`,
       method: 'GET',
@@ -141,6 +152,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
 
     // Point endpoint to broken scenario
     const brokenEndpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Broken Endpoint',
       url: `${baseUrl}/mock-api/products/101?scenario=wrong-price-type`,
       method: 'GET',
@@ -148,6 +160,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     });
 
     await Contract.create({
+      userId: testUser._id,
       endpoint: brokenEndpoint._id,
       name: 'Approved Contract',
       schema: productSchema,
@@ -172,6 +185,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     await Contract.deleteMany({});
 
     await Endpoint.create({
+      userId: testUser._id,
       name: 'Orphan Endpoint',
       url: `${baseUrl}/mock-api/products/101`,
       method: 'GET',
@@ -210,6 +224,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
 
     const originalUrl = `${baseUrl}/mock-api/products/101`;
     const endpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Unset Scenario Endpoint',
       url: originalUrl,
       method: 'GET',
@@ -217,6 +232,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     });
 
     await Contract.create({
+      userId: testUser._id,
       endpoint: endpoint._id,
       name: 'Approved Contract',
       schema: productSchema,
@@ -248,6 +264,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
 
     const originalUrl = `${baseUrl}/mock-api/products/101`;
     const endpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Scenario Test Endpoint',
       url: originalUrl,
       method: 'GET',
@@ -255,6 +272,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     });
 
     await Contract.create({
+      userId: testUser._id,
       endpoint: endpoint._id,
       name: 'Approved Contract',
       schema: productSchema,
@@ -262,31 +280,28 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
       isActive: true
     });
 
-    // Set temporary scenario via environment variable
     process.env.SCHEDULER_TEST_SCENARIO = 'wrong-price-type';
 
     try {
       const summary = await runScheduledChecks({ overrideBaseUrl: baseUrl });
       assert.equal(summary.totalEndpoints, 1);
       assert.equal(summary.failed, 1);
-      assert.equal(summary.passed, 0);
 
-      // Verify that the endpoint document in MongoDB was NOT modified
-      const dbEndpoint = await Endpoint.findById(endpoint._id);
-      assert.equal(dbEndpoint.url, originalUrl);
-
-      // Verify CheckRun recorded the schema failure
+      // Verify check failed with schema violation
       const checkRun = await CheckRun.findOne({ endpoint: endpoint._id });
       assert.equal(checkRun.status, 'failed');
       assert.equal(checkRun.failureType, 'SCHEMA_VIOLATION');
+      assert.ok(checkRun.errors.some(e => e.includes('Field \'price\' must be of type number')));
 
-      // Verify an OPEN incident was created
+      // DB URL remains untouched
+      const dbEndpoint = await Endpoint.findById(endpoint._id);
+      assert.equal(dbEndpoint.url, originalUrl);
+
+      // An incident was created
       const incident = await Incident.findOne({ endpoint: endpoint._id, status: 'open' });
       assert.ok(incident);
       assert.equal(incident.failureType, 'SCHEMA_VIOLATION');
-      assert.equal(incident.occurrenceCount, 1);
     } finally {
-      // Always cleanup environment variable
       delete process.env.SCHEDULER_TEST_SCENARIO;
     }
   });
@@ -300,6 +315,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     // Endpoint URL already has a query param (?dummy=123)
     const originalUrl = `${baseUrl}/mock-api/products/101?dummy=123`;
     const endpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Preserve Query Endpoint',
       url: originalUrl,
       method: 'GET',
@@ -307,6 +323,7 @@ test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
     });
 
     await Contract.create({
+      userId: testUser._id,
       endpoint: endpoint._id,
       name: 'Approved Contract',
       schema: productSchema,

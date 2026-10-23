@@ -6,20 +6,24 @@ const Endpoint = require('../models/Endpoint');
 const Contract = require('../models/Contract');
 const CheckRun = require('../models/CheckRun');
 const { seedDemoData } = require('../scripts/seed');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// Protect all check and monitoring routes with authentication
+router.use(requireAuth);
 
 const SUPPORTED_SCENARIOS = ['missing-price', 'wrong-price-type', 'server-error', 'slow'];
 
 /**
- * Helper to retrieve active demo Endpoint and Contract documents,
+ * Helper to retrieve active demo Endpoint and Contract documents for the authenticated user,
  * self-healing by seeding them if they do not exist yet.
  */
-async function getDemoEndpointAndContract() {
+async function getDemoEndpointAndContract(userId) {
   const endpointName = 'Mock Product API - Item 101';
-  let endpoint = await Endpoint.findOne({ name: endpointName });
-  let contract = endpoint ? await Contract.findOne({ endpoint: endpoint._id, isActive: true }) : null;
+  let endpoint = await Endpoint.findOne({ name: endpointName, userId });
+  let contract = endpoint ? await Contract.findOne({ endpoint: endpoint._id, userId, isActive: true }) : null;
 
   if (!endpoint || !contract) {
-    const seeded = await seedDemoData();
+    const seeded = await seedDemoData(userId);
     endpoint = seeded.endpoint;
     contract = seeded.contract;
   }
@@ -29,7 +33,7 @@ async function getDemoEndpointAndContract() {
 
 /**
  * POST /api/checks/mock-product
- * Triggers a contract check and persists the CheckRun record in MongoDB.
+ * Triggers a contract check and persists the CheckRun record in MongoDB scoped to authenticated user.
  */
 router.post('/mock-product', async (req, res, next) => {
   try {
@@ -68,12 +72,13 @@ router.post('/mock-product', async (req, res, next) => {
       timeoutMs: resolvedTimeout
     });
 
-    // 5. Persist the check run if database is connected
+    // 5. Persist the check run with user ownership if database is connected
     let checkRunId = null;
     if (mongoose.connection.readyState === 1) {
-      const { endpoint, contract } = await getDemoEndpointAndContract();
+      const { endpoint, contract } = await getDemoEndpointAndContract(req.userId);
 
       const checkRun = await CheckRun.create({
+        userId: req.userId,
         endpoint: endpoint._id,
         contract: contract._id,
         status: checkResult.status,
@@ -102,7 +107,7 @@ router.post('/mock-product', async (req, res, next) => {
 
 /**
  * GET /api/checks/history/latest
- * Returns the single most recent check run without requiring manual database inspection.
+ * Returns the single most recent check run belonging to the authenticated user.
  */
 router.get('/history/latest', async (req, res, next) => {
   try {
@@ -113,7 +118,7 @@ router.get('/history/latest', async (req, res, next) => {
       });
     }
 
-    const latest = await CheckRun.findOne()
+    const latest = await CheckRun.findOne({ userId: req.userId })
       .sort({ checkedAt: -1 })
       .select('-__v')
       .populate('endpoint', 'name url method')
@@ -135,7 +140,7 @@ router.get('/history/latest', async (req, res, next) => {
 
 /**
  * GET /api/checks/history
- * Returns paginated check history sorted newest first.
+ * Returns paginated check history for the authenticated user, sorted newest first.
  *
  * Query parameters:
  * - page: positive integer (default 1)
@@ -177,8 +182,8 @@ router.get('/history', async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const [total, records] = await Promise.all([
-      CheckRun.countDocuments(),
-      CheckRun.find()
+      CheckRun.countDocuments({ userId: req.userId }),
+      CheckRun.find({ userId: req.userId })
         .sort({ checkedAt: -1 })
         .skip(skip)
         .limit(limit)

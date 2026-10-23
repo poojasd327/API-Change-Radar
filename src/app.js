@@ -4,6 +4,10 @@ const healthRoutes = require('./routes/health.routes');
 const mockProductRoutes = require('./routes/mockProduct.routes');
 const checkRoutes = require('./routes/check.routes');
 const incidentRoutes = require('./routes/incident.routes');
+const endpointRoutes = require('./routes/endpoint.routes');
+const authRoutes = require('./routes/auth.routes');
+const statusPageRoutes = require('./routes/statusPage.routes');
+const publicStatusRoutes = require('./routes/publicStatus.routes');
 
 const app = express();
 
@@ -13,8 +17,12 @@ app.use(express.json());
 
 // Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/endpoints', endpointRoutes);
 app.use('/api/checks', checkRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/status-page', statusPageRoutes);
+app.use('/api/public/status', publicStatusRoutes);
 app.use('/mock-api/products', mockProductRoutes);
 
 // Fallback 404 handler for unknown routes

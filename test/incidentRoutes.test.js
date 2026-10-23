@@ -8,6 +8,9 @@ const Contract = require('../src/models/Contract');
 const Incident = require('../src/models/Incident');
 const { productSchema } = require('../src/contracts/product.schema');
 
+const User = require('../src/models/User');
+const { generateToken } = require('../src/services/auth.service');
+
 test('Milestone 6, Step 3: Incident REST API Routes Suite', async (t) => {
   let mongod;
   let server;
@@ -16,11 +19,59 @@ test('Milestone 6, Step 3: Incident REST API Routes Suite', async (t) => {
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri());
 
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-12345';
+  process.env.JWT_EXPIRES_IN = '1h';
+
+  const testUser = await User.create({
+    name: 'Incident Suite User',
+    email: 'incident-suite@example.com',
+    password: 'securePassword123'
+  });
+  const authToken = generateToken(testUser);
+
+  const nativeFetch = globalThis.fetch;
+  const fetch = (url, opts = {}) => {
+    const headers = { ...opts?.headers };
+    if (!headers.Authorization && !headers.authorization) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    return nativeFetch(url, { ...opts, headers });
+  };
+
+  const origEndpointCreate = Endpoint.create.bind(Endpoint);
+  Endpoint.create = function(doc, ...args) {
+    if (Array.isArray(doc)) {
+      doc.forEach(d => { if (!d.userId) d.userId = testUser._id; });
+    } else if (doc && !doc.userId) {
+      doc.userId = testUser._id;
+    }
+    return origEndpointCreate(doc, ...args);
+  };
+
+  const origContractCreate = Contract.create.bind(Contract);
+  Contract.create = function(doc, ...args) {
+    if (doc && !doc.userId) {
+      doc.userId = testUser._id;
+    }
+    return origContractCreate(doc, ...args);
+  };
+
+  const origIncidentCreate = Incident.create.bind(Incident);
+  Incident.create = function(doc, ...args) {
+    if (doc && !doc.userId) {
+      doc.userId = testUser._id;
+    }
+    return origIncidentCreate(doc, ...args);
+  };
+
   server = app.listen(0);
   const port = server.address().port;
   baseUrl = `http://127.0.0.1:${port}`;
 
   t.after(async () => {
+    Endpoint.create = origEndpointCreate;
+    Contract.create = origContractCreate;
+    Incident.create = origIncidentCreate;
     if (server) server.close();
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();

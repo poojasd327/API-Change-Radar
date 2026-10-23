@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const contractSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true
+    },
     endpoint: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Endpoint',
@@ -31,8 +37,9 @@ const contractSchema = new mongoose.Schema(
   }
 );
 
-// Index to quickly look up the active contract for an endpoint
+// Indexes to quickly look up active contracts for endpoints and users
 contractSchema.index({ endpoint: 1, isActive: 1 });
+contractSchema.index({ userId: 1, endpoint: 1, isActive: 1 });
 
 const Contract = mongoose.model('Contract', contractSchema);
 

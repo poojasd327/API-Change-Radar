@@ -55,8 +55,12 @@ async function runScheduledChecks(options = {}) {
       };
     }
 
-    // 3. Find all active endpoints
-    const activeEndpoints = await Endpoint.find({ isActive: true });
+    // 3. Find all active endpoints with valid ownership (legacy unassigned endpoints are safely skipped)
+    const endpointQuery = { isActive: true };
+    if (!options.includeLegacyUnowned) {
+      endpointQuery.userId = { $ne: null, $exists: true };
+    }
+    const activeEndpoints = await Endpoint.find(endpointQuery);
     summary.totalEndpoints = activeEndpoints.length;
 
     if (activeEndpoints.length === 0) {
@@ -68,7 +72,11 @@ async function runScheduledChecks(options = {}) {
     for (const endpoint of activeEndpoints) {
       try {
         // Find the active approved contract for this endpoint
-        const contract = await Contract.findOne({ endpoint: endpoint._id, isActive: true });
+        const contractQuery = { endpoint: endpoint._id, isActive: true };
+        if (endpoint.userId) {
+          contractQuery.$or = [{ userId: endpoint.userId }, { userId: null }];
+        }
+        const contract = await Contract.findOne(contractQuery);
         if (!contract) {
           console.warn(`[Scheduler] Skipping "${endpoint.name}": no active approved contract found.`);
           summary.skipped++;
@@ -108,11 +116,13 @@ async function runScheduledChecks(options = {}) {
         const checkResult = await runProductCheck({
           url: targetUrl,
           schema: contract.schema,
-          timeoutMs: 3000
+          timeoutMs: 3000,
+          allowLocal: options.allowLocal !== undefined ? options.allowLocal : (options.overrideBaseUrl ? true : undefined)
         });
 
-        // Persist the CheckRun document
+        // Persist the CheckRun document with endpoint owner's identity
         const checkRunDoc = await CheckRun.create({
+          userId: endpoint.userId || null,
           endpoint: endpoint._id,
           contract: contract._id,
           status: checkResult.status,
@@ -135,12 +145,16 @@ async function runScheduledChecks(options = {}) {
         // 5. Incident lifecycle management: update/create on failure, auto-resolve on recovery
         try {
           if (checkResult.status === 'healthy') {
-            await resolveEndpointIncidents({ endpointId: endpoint._id });
+            await resolveEndpointIncidents({
+              endpointId: endpoint._id,
+              userId: endpoint.userId || null
+            });
           } else {
             await recordIncidentFailure({
               endpoint,
               contract,
-              checkResult
+              checkResult,
+              userId: endpoint.userId || null
             });
           }
         } catch (incidentErr) {

@@ -19,6 +19,28 @@ test('Milestone 4: MongoDB Database Integration & Persistence Suite', async (t) 
   const mongoUri = mongod.getUri();
   await mongoose.connect(mongoUri);
 
+  const User = require('../src/models/User');
+  const { generateToken } = require('../src/services/auth.service');
+
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-12345';
+  process.env.JWT_EXPIRES_IN = '1h';
+
+  const testUser = await User.create({
+    name: 'Database Suite User',
+    email: 'database-suite@example.com',
+    password: 'securePassword123'
+  });
+  const authToken = generateToken(testUser);
+
+  const nativeFetch = globalThis.fetch;
+  const fetch = (url, opts = {}) => {
+    const headers = { ...opts?.headers };
+    if (!headers.Authorization && !headers.authorization) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    return nativeFetch(url, { ...opts, headers });
+  };
+
   server = app.listen(0);
   const port = server.address().port;
   baseUrl = `http://127.0.0.1:${port}`;
@@ -87,7 +109,7 @@ test('Milestone 4: MongoDB Database Integration & Persistence Suite', async (t) 
 
   await t.test('4. Seed script is idempotent and does not create duplicate records', async () => {
     // First run: creates records
-    const seed1 = await seedDemoData();
+    const seed1 = await seedDemoData(testUser._id);
     assert.ok(seed1.endpoint._id);
     assert.ok(seed1.contract._id);
 
@@ -97,7 +119,7 @@ test('Milestone 4: MongoDB Database Integration & Persistence Suite', async (t) 
     assert.equal(countContracts1, 1);
 
     // Second run: must reuse existing records without duplicating
-    const seed2 = await seedDemoData();
+    const seed2 = await seedDemoData(testUser._id);
     assert.equal(seed2.endpoint._id.toString(), seed1.endpoint._id.toString());
     assert.equal(seed2.contract._id.toString(), seed1.contract._id.toString());
 

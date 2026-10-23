@@ -7,6 +7,7 @@ const Endpoint = require('../src/models/Endpoint');
 const Contract = require('../src/models/Contract');
 const Incident = require('../src/models/Incident');
 const CheckRun = require('../src/models/CheckRun');
+const User = require('../src/models/User');
 const { productSchema } = require('../src/contracts/product.schema');
 const {
   recordIncidentFailure,
@@ -247,8 +248,15 @@ test('Milestone 6, Step 2: Incident Service & Scheduler Integration Suite', asyn
   // --- 7. SCHEDULER INTEGRATION TEST ---
 
   await t.test('7. Scheduler automatically records incidents on failure and resolves on success', async () => {
+    const testUser = await User.create({
+      name: 'Incident Service User',
+      email: 'inc-service@example.com',
+      password: 'password123'
+    });
+
     // Set up an endpoint that fails (wrong-price-type)
     const endpoint = await Endpoint.create({
+      userId: testUser._id,
       name: 'Scheduler Monitored Endpoint',
       url: `${baseUrl}/mock-api/products/101?scenario=wrong-price-type`,
       method: 'GET',
@@ -256,6 +264,7 @@ test('Milestone 6, Step 2: Incident Service & Scheduler Integration Suite', asyn
     });
 
     await Contract.create({
+      userId: testUser._id,
       endpoint: endpoint._id,
       name: 'Approved Product Schema',
       schema: productSchema,

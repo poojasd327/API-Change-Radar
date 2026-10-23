@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const incidentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true
+    },
     endpoint: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Endpoint',
@@ -63,12 +69,15 @@ const incidentSchema = new mongoose.Schema(
 
 // Compound index for finding existing open incidents for an endpoint by failure type
 incidentSchema.index({ endpoint: 1, status: 1, failureType: 1 });
+incidentSchema.index({ userId: 1, endpoint: 1, status: 1, failureType: 1 });
 
 // Compound index for dashboard queries filtering by status and ordering by most recent activity
 incidentSchema.index({ status: 1, lastSeenAt: -1 });
+incidentSchema.index({ userId: 1, status: 1, lastSeenAt: -1 });
 
-// Single index for global recent activity queries
+// Single index for recent activity queries
 incidentSchema.index({ lastSeenAt: -1 });
+incidentSchema.index({ userId: 1, lastSeenAt: -1 });
 
 const Incident = mongoose.model('Incident', incidentSchema);
 

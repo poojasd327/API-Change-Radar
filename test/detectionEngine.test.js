@@ -1,20 +1,50 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
 const { runProductCheck } = require('../src/services/detectionEngine.service');
+const User = require('../src/models/User');
+const { generateToken } = require('../src/services/auth.service');
 
 test('Detection Engine and Check Route Suite', async (t) => {
+  let mongod = await MongoMemoryServer.create();
+  await mongoose.connect(mongod.getUri());
+
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-12345';
+  process.env.JWT_EXPIRES_IN = '1h';
+
+  const testUser = await User.create({
+    name: 'Detection Suite User',
+    email: 'detection-suite@example.com',
+    password: 'securePassword123'
+  });
+  const authToken = generateToken(testUser);
+
   // Bind server to an ephemeral port (port 0) for isolated, parallel-safe testing
   const server = app.listen(0);
   const port = server.address().port;
   const mockBaseUrl = `http://127.0.0.1:${port}/mock-api/products`;
   const checkEndpointUrl = `http://127.0.0.1:${port}/api/checks/mock-product`;
 
+  const nativeFetch = globalThis.fetch;
+  const fetch = (url, opts = {}) => {
+    const headers = { ...opts?.headers };
+    if (!headers.Authorization && !headers.authorization) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    return nativeFetch(url, { ...opts, headers });
+  };
+
   // Inform Express app about this server's dynamic mock API base URL
   app.set('mockApiBaseUrl', mockBaseUrl);
 
-  t.after(() => {
+  t.after(async () => {
     server.close();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+    if (mongod) await mongod.stop();
   });
 
   // --- UNIT / SERVICE LEVEL TESTS (runProductCheck) ---
