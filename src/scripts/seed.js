@@ -40,6 +40,7 @@ async function seedDemoData(userId = null) {
       name: contractName,
       schema: productSchema,
       version: 1,
+      isApproved: true,
       isActive: true
     });
     console.log(`[Seed] Created approved Contract: "${contract.name}" (ID: ${contract._id}, User: ${userId || 'none'})`);

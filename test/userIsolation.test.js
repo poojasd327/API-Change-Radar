@@ -376,6 +376,39 @@ test('Stage 2: Per-User Data Isolation and Authorization Suite', async (t) => {
     const savedRun = await CheckRun.findOne({ endpoint: aliceEndpointId });
     assert.ok(savedRun);
     assert.equal(savedRun.userId.toString(), alice._id.toString());
+
+    // Verify an incident was created for Alice's endpoint and assigned to Alice
+    const aliceIncident = await Incident.findOne({ endpoint: aliceEndpointId, status: 'open' });
+    assert.ok(aliceIncident, 'Scheduler must create an OPEN incident on failure');
+    assert.equal(aliceIncident.userId.toString(), alice._id.toString(), 'Incident must be owned by Alice');
+    assert.equal(aliceIncident.occurrenceCount, 1);
+
+    // Verify Bob cannot see Alice's incident in GET /api/incidents (data isolation)
+    const resBobIncidents = await fetch(`${baseUrl}/api/incidents`, {
+      headers: { Authorization: `Bearer ${bobToken}` }
+    });
+    const bobIncidentsData = await resBobIncidents.json();
+    assert.equal(bobIncidentsData.data.length, 0, 'Bob must see 0 incidents');
+
+    // Verify Alice sees her incident in GET /api/incidents
+    const resAliceIncidents = await fetch(`${baseUrl}/api/incidents`, {
+      headers: { Authorization: `Bearer ${aliceToken}` }
+    });
+    const aliceIncidentsData = await resAliceIncidents.json();
+    assert.equal(aliceIncidentsData.data.length, 1);
+    assert.equal(aliceIncidentsData.data[0]._id, aliceIncident._id.toString());
+
+    // Run scheduled checks a second time: occurrenceCount increments
+    await runScheduledChecks({ overrideBaseUrl: `${baseUrl}/mock-api/products` });
+    const updatedIncident = await Incident.findById(aliceIncident._id);
+    assert.equal(updatedIncident.occurrenceCount, 2, 'Second failure must increment occurrenceCount');
+
+    // Fix Alice's endpoint to a healthy URL and run scheduler: incident auto-resolves
+    await Endpoint.findByIdAndUpdate(aliceEndpointId, { url: `${baseUrl}/mock-api/products/101` });
+    await runScheduledChecks({ overrideBaseUrl: `${baseUrl}/mock-api/products` });
+    const resolvedIncident = await Incident.findById(aliceIncident._id);
+    assert.equal(resolvedIncident.status, 'resolved', 'Healthy check must auto-resolve incident');
+    assert.ok(resolvedIncident.resolvedAt);
   });
 
   await t.test('12. Legacy unowned endpoints are skipped by scheduler and hidden from users', async () => {

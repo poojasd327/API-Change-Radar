@@ -300,4 +300,50 @@ test('Milestone 6, Step 2: Incident Service & Scheduler Integration Suite', asyn
     assert.equal(resolvedIncident.occurrenceCount, 2);
     assert.ok(resolvedIncident.resolvedAt);
   });
+  // --- 8. MANUAL CHECKS DO NOT CREATE INCIDENTS (BY DESIGN) ---
+
+  await t.test('8. Manual check via POST /api/checks/mock-product records CheckRun but intentionally does NOT create incidents', async () => {
+    const { generateToken } = require('../src/services/auth.service');
+
+    const testUser = await User.create({
+      name: 'Manual Check Diagnostic User',
+      email: 'manual-diag@example.com',
+      password: 'password123'
+    });
+
+    const token = generateToken(testUser);
+
+    const initialIncidentCount = await Incident.countDocuments({ userId: testUser._id });
+
+    // Execute manual check with deliberate schema failure scenario
+    const res = await fetch(`${baseUrl}/api/checks/mock-product`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ scenario: 'wrong-price-type' })
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'failed');
+    assert.equal(body.failureType, 'SCHEMA_VIOLATION');
+    assert.ok(body.checkRunId, 'CheckRun ID must be returned');
+
+    // 1. Verify CheckRun record was created and isolated to testUser
+    const savedRun = await CheckRun.findById(body.checkRunId);
+    assert.ok(savedRun, 'CheckRun document must exist in database');
+    assert.equal(savedRun.userId.toString(), testUser._id.toString());
+    assert.equal(savedRun.status, 'failed');
+    assert.equal(savedRun.failureType, 'SCHEMA_VIOLATION');
+
+    // 2. CRITICAL: Verify NO incident was created for this user (design distinction)
+    const postIncidentCount = await Incident.countDocuments({ userId: testUser._id });
+    assert.equal(
+      postIncidentCount,
+      initialIncidentCount,
+      'Manual check execution must NOT create an incident document'
+    );
+  });
 });
