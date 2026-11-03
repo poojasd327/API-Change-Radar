@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const app = require('../src/app');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import app from '../src/app.js';
 
 test('Mock Product API suite', async (t) => {
   // Start server on an ephemeral port (port 0 lets OS assign a free port)

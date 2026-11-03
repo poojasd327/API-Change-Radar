@@ -1,7 +1,7 @@
-const http = require('http');
-const https = require('https');
-const net = require('net');
-const dns = require('dns');
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
+import dns from 'node:dns';
 
 /**
  * Checks whether an IPv4 address belongs to a prohibited range:
@@ -667,7 +667,7 @@ async function safeHttpRequest(options = {}) {
   }
 }
 
-module.exports = {
+export {
   isProhibitedIPv4,
   isProhibitedIPv6,
   isProhibitedIp,

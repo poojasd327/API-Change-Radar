@@ -1,7 +1,9 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const { connectDB, disconnectDB } = require('../config/db');
-const User = require('../models/User');
+import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import mongoose from 'mongoose';
+import { connectDB, disconnectDB } from '../config/db.js';
+import User from '../models/User.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -82,7 +84,7 @@ async function provisionAdminUser({ name, email, password }) {
 }
 
 // Standalone CLI execution
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   (async () => {
     try {
       const cliArgs = parseCliArgs();
@@ -120,6 +122,7 @@ if (require.main === module) {
   })();
 }
 
-module.exports = {
+export {
   provisionAdminUser
 };
+export default provisionAdminUser;

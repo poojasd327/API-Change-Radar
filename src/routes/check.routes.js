@@ -1,12 +1,13 @@
-const express = require('express');
+import express from 'express';
+import mongoose from 'mongoose';
+import { runProductCheck } from '../services/detectionEngine.service.js';
+import Endpoint from '../models/Endpoint.js';
+import Contract from '../models/Contract.js';
+import CheckRun from '../models/CheckRun.js';
+import { seedDemoData } from '../scripts/seed.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const mongoose = require('mongoose');
-const { runProductCheck } = require('../services/detectionEngine.service');
-const Endpoint = require('../models/Endpoint');
-const Contract = require('../models/Contract');
-const CheckRun = require('../models/CheckRun');
-const { seedDemoData } = require('../scripts/seed');
-const { requireAuth } = require('../middleware/auth.middleware');
 
 // Protect all check and monitoring routes with authentication
 router.use(requireAuth);
@@ -211,4 +212,4 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

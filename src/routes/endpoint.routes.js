@@ -1,11 +1,12 @@
-const express = require('express');
+import express from 'express';
+import mongoose from 'mongoose';
+import Endpoint from '../models/Endpoint.js';
+import Contract from '../models/Contract.js';
+import CheckRun from '../models/CheckRun.js';
+import { validateEndpointUrl } from '../services/ssrfProtection.service.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const mongoose = require('mongoose');
-const Endpoint = require('../models/Endpoint');
-const Contract = require('../models/Contract');
-const CheckRun = require('../models/CheckRun');
-const { validateEndpointUrl } = require('../services/ssrfProtection.service');
-const { requireAuth } = require('../middleware/auth.middleware');
 
 // Protect all endpoint management routes with authentication
 router.use(requireAuth);
@@ -485,4 +486,4 @@ router.patch('/:id', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

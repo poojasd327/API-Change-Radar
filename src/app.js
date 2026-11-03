@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const healthRoutes = require('./routes/health.routes');
-const mockProductRoutes = require('./routes/mockProduct.routes');
-const checkRoutes = require('./routes/check.routes');
-const incidentRoutes = require('./routes/incident.routes');
-const endpointRoutes = require('./routes/endpoint.routes');
-const contractRoutes = require('./routes/contract.routes');
-const authRoutes = require('./routes/auth.routes');
-const statusPageRoutes = require('./routes/statusPage.routes');
-const publicStatusRoutes = require('./routes/publicStatus.routes');
+import express from 'express';
+import cors from 'cors';
+import healthRoutes from './routes/health.routes.js';
+import mockProductRoutes from './routes/mockProduct.routes.js';
+import checkRoutes from './routes/check.routes.js';
+import incidentRoutes from './routes/incident.routes.js';
+import endpointRoutes from './routes/endpoint.routes.js';
+import contractRoutes from './routes/contract.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import statusPageRoutes from './routes/statusPage.routes.js';
+import publicStatusRoutes from './routes/publicStatus.routes.js';
 
 const app = express();
 
@@ -44,4 +44,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-module.exports = app;
+export { app };
+export default app;

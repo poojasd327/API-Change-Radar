@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const endpointSchema = new mongoose.Schema(
   {
@@ -41,4 +41,5 @@ endpointSchema.index({ userId: 1, url: 1 });
 
 const Endpoint = mongoose.model('Endpoint', endpointSchema);
 
-module.exports = Endpoint;
+export { Endpoint };
+export default Endpoint;

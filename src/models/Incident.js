@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const incidentSchema = new mongoose.Schema(
   {
@@ -81,4 +81,5 @@ incidentSchema.index({ userId: 1, lastSeenAt: -1 });
 
 const Incident = mongoose.model('Incident', incidentSchema);
 
-module.exports = Incident;
+export { Incident };
+export default Incident;

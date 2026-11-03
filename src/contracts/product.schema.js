@@ -32,6 +32,7 @@ const productSchema = {
   }
 };
 
-module.exports = {
+export {
   productSchema
 };
+export default productSchema;

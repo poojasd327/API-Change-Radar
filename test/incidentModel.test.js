@@ -1,11 +1,11 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const Incident = require('../src/models/Incident');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const { productSchema } = require('../src/contracts/product.schema');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import Incident from '../src/models/Incident.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import { productSchema } from '../src/contracts/product.schema.js';
 
 test('Milestone 6, Step 1: Incident Model Suite', async (t) => {
   let mongod;

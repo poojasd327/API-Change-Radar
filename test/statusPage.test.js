@@ -1,15 +1,16 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const User = require('../src/models/User');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const CheckRun = require('../src/models/CheckRun');
-const Incident = require('../src/models/Incident');
-const { StatusPage } = require('../src/models/StatusPage');
-const { generateToken } = require('../src/services/auth.service');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import User from '../src/models/User.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import CheckRun from '../src/models/CheckRun.js';
+import Incident from '../src/models/Incident.js';
+import { StatusPage } from '../src/models/StatusPage.js';
+import { generateToken } from '../src/services/auth.service.js';
+import publicStatusRouter from '../src/routes/publicStatus.routes.js';
 
 test('Stage 3: Public Status API and Safe Publishing Suite', async (t) => {
   let mongod;
@@ -60,7 +61,7 @@ test('Stage 3: Public Status API and Safe Publishing Suite', async (t) => {
     if (mongod) await mongod.stop();
   });
 
-  const publicStatusRouter = require('../src/routes/publicStatus.routes');
+
 
   t.beforeEach(async () => {
     if (publicStatusRouter.rateLimiter?.reset) {

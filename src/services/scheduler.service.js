@@ -1,10 +1,10 @@
-const cron = require('node-cron');
-const mongoose = require('mongoose');
-const Endpoint = require('../models/Endpoint');
-const Contract = require('../models/Contract');
-const CheckRun = require('../models/CheckRun');
-const { runProductCheck } = require('./detectionEngine.service');
-const { recordIncidentFailure, resolveEndpointIncidents } = require('./incident.service');
+import cron from 'node-cron';
+import mongoose from 'mongoose';
+import Endpoint from '../models/Endpoint.js';
+import Contract from '../models/Contract.js';
+import CheckRun from '../models/CheckRun.js';
+import { runProductCheck } from './detectionEngine.service.js';
+import { recordIncidentFailure, resolveEndpointIncidents } from './incident.service.js';
 
 // Default cron schedule: Every 5 minutes
 const DEFAULT_CRON_SCHEDULE = '*/5 * * * *';
@@ -244,7 +244,7 @@ function isRunActive() {
   return isRunInProgress;
 }
 
-module.exports = {
+export {
   startScheduler,
   stopScheduler,
   runScheduledChecks,

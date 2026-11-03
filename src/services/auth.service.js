@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const DEFAULT_DEV_SECRET = 'dev-jwt-secret-key-change-in-production';
 const DEFAULT_EXPIRATION = '1h';
@@ -82,7 +82,7 @@ function sanitizeUser(user) {
   };
 }
 
-module.exports = {
+export {
   generateToken,
   verifyToken,
   sanitizeUser,

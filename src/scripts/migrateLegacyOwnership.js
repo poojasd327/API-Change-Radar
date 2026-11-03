@@ -1,11 +1,13 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const { connectDB, disconnectDB } = require('../config/db');
-const User = require('../models/User');
-const Endpoint = require('../models/Endpoint');
-const Contract = require('../models/Contract');
-const CheckRun = require('../models/CheckRun');
-const Incident = require('../models/Incident');
+import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import mongoose from 'mongoose';
+import { connectDB, disconnectDB } from '../config/db.js';
+import User from '../models/User.js';
+import Endpoint from '../models/Endpoint.js';
+import Contract from '../models/Contract.js';
+import CheckRun from '../models/CheckRun.js';
+import Incident from '../models/Incident.js';
 
 /**
  * Audits all database collections for unresolved legacy records without an assigned userId.
@@ -125,7 +127,7 @@ async function assignLegacyOwnership({ targetUserIdentifier, endpointId = null }
 }
 
 // Standalone CLI execution
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   (async () => {
     try {
       await connectDB();
@@ -180,7 +182,7 @@ if (require.main === module) {
   })();
 }
 
-module.exports = {
+export {
   auditUnresolvedLegacyRecords,
   assignLegacyOwnership
 };

@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
+import mongoose from 'mongoose';
+import crypto from 'node:crypto';
 
 /**
  * Generates an unpredictable, URL-safe 20-character hexadecimal slug.
@@ -61,7 +61,8 @@ statusPageSchema.index({ slug: 1, isPublished: 1 });
 
 const StatusPage = mongoose.model('StatusPage', statusPageSchema);
 
-module.exports = {
+export {
   StatusPage,
   generateSlug
 };
+export default StatusPage;

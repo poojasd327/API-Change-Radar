@@ -1,4 +1,4 @@
-const Incident = require('../models/Incident');
+import Incident from '../models/Incident.js';
 
 /**
  * Generate human-readable incident titles based on failure type.
@@ -145,7 +145,7 @@ async function resolveEndpointIncidents({ endpointId, userId = null }) {
   };
 }
 
-module.exports = {
+export {
   recordIncidentFailure,
   resolveEndpointIncidents,
   formatIncidentTitle

@@ -1,22 +1,22 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const User = require('../src/models/User');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const CheckRun = require('../src/models/CheckRun');
-const Incident = require('../src/models/Incident');
-const { productSchema } = require('../src/contracts/product.schema');
-const {
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import User from '../src/models/User.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import CheckRun from '../src/models/CheckRun.js';
+import Incident from '../src/models/Incident.js';
+import { productSchema } from '../src/contracts/product.schema.js';
+import {
   startScheduler,
   stopScheduler,
   runScheduledChecks,
   isSchedulerRunning,
   getActiveSchedule,
   DEFAULT_CRON_SCHEDULE
-} = require('../src/services/scheduler.service');
+} from '../src/services/scheduler.service.js';
 
 test('Milestone 5: Automatic API Monitoring Scheduler Suite', async (t) => {
   let mongod;

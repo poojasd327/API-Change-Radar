@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 /**
  * Connect to MongoDB with sanitized error handling.
@@ -52,7 +52,7 @@ mongoose.connection.on('disconnected', () => {
   console.log('[Database] MongoDB disconnected.');
 });
 
-module.exports = {
+export {
   connectDB,
   disconnectDB
 };

@@ -1,6 +1,6 @@
-const Ajv = require('ajv');
-const { productSchema } = require('../contracts/product.schema');
-const { safeHttpRequest } = require('./ssrfProtection.service');
+import Ajv from 'ajv';
+import { productSchema } from '../contracts/product.schema.js';
+import { safeHttpRequest } from './ssrfProtection.service.js';
 
 // Initialize Ajv with allErrors: true to report all schema violations, not just the first one
 const ajv = new Ajv({ allErrors: true });
@@ -163,7 +163,7 @@ async function runProductCheck({
   }
 }
 
-module.exports = {
+export {
   runProductCheck,
   formatSchemaErrors,
   validateProduct

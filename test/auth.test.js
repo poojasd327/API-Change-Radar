@@ -1,13 +1,13 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const jwt = require('jsonwebtoken');
-const app = require('../src/app');
-const User = require('../src/models/User');
-const { generateToken, verifyToken, sanitizeUser, getJwtSecret } = require('../src/services/auth.service');
-const { requireAuth, requireAdmin } = require('../src/middleware/auth.middleware');
-const { provisionAdminUser } = require('../src/scripts/createAdmin');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import jwt from 'jsonwebtoken';
+import app from '../src/app.js';
+import User from '../src/models/User.js';
+import { generateToken, verifyToken, sanitizeUser, getJwtSecret } from '../src/services/auth.service.js';
+import { requireAuth, requireAdmin } from '../src/middleware/auth.middleware.js';
+import { provisionAdminUser } from '../src/scripts/createAdmin.js';
 
 test('Stage 1: Individual User Authentication Suite', async (t) => {
   let mongod;

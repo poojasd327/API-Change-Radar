@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import mongoose from 'mongoose';
+import Incident from '../models/Incident.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const mongoose = require('mongoose');
-const Incident = require('../models/Incident');
-const { requireAuth } = require('../middleware/auth.middleware');
 
 // Protect all incident routes with authentication
 router.use(requireAuth);
@@ -142,4 +143,4 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

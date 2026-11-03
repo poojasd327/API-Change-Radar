@@ -1,14 +1,15 @@
-const express = require('express');
-const router = express.Router();
-const mongoose = require('mongoose');
-const Contract = require('../models/Contract');
-const Endpoint = require('../models/Endpoint');
-const { requireAuth } = require('../middleware/auth.middleware');
-const {
+import express from 'express';
+import mongoose from 'mongoose';
+import Contract from '../models/Contract.js';
+import Endpoint from '../models/Endpoint.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+import {
   validateSchemaStructure,
   validateSampleAgainstSchema,
   inferSchemaFromSample,
-} = require('../services/contractValidator.service');
+} from '../services/contractValidator.service.js';
+
+const router = express.Router();
 
 // Protect all contract routes with authentication
 router.use(requireAuth);
@@ -413,4 +414,4 @@ router.post('/:id/deactivate', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

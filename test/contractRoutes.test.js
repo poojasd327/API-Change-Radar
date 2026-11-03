@@ -1,12 +1,12 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const User = require('../src/models/User');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const { generateToken } = require('../src/services/auth.service');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import User from '../src/models/User.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import { generateToken } from '../src/services/auth.service.js';
 
 test('Contract Management & Approval REST API Suite', async (t) => {
   let mongod;

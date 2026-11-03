@@ -1,7 +1,7 @@
-const { StatusPage } = require('../models/StatusPage');
-const Endpoint = require('../models/Endpoint');
-const CheckRun = require('../models/CheckRun');
-const Incident = require('../models/Incident');
+import { StatusPage } from '../models/StatusPage.js';
+import Endpoint from '../models/Endpoint.js';
+import CheckRun from '../models/CheckRun.js';
+import Incident from '../models/Incident.js';
 
 /**
  * Calculates a sanitized public status for a single monitored endpoint.
@@ -166,7 +166,7 @@ async function getPublicStatusData(slug, now = new Date()) {
   };
 }
 
-module.exports = {
+export {
   calculateServiceStatus,
   getPublicStatusData
 };

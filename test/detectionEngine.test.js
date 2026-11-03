@@ -1,11 +1,11 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const { runProductCheck } = require('../src/services/detectionEngine.service');
-const User = require('../src/models/User');
-const { generateToken } = require('../src/services/auth.service');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import { runProductCheck } from '../src/services/detectionEngine.service.js';
+import User from '../src/models/User.js';
+import { generateToken } from '../src/services/auth.service.js';
 
 test('Detection Engine and Check Route Suite', async (t) => {
   let mongod = await MongoMemoryServer.create();

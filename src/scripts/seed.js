@@ -1,9 +1,11 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const { connectDB, disconnectDB } = require('../config/db');
-const Endpoint = require('../models/Endpoint');
-const Contract = require('../models/Contract');
-const { productSchema } = require('../contracts/product.schema');
+import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import process from 'node:process';
+import mongoose from 'mongoose';
+import { connectDB, disconnectDB } from '../config/db.js';
+import Endpoint from '../models/Endpoint.js';
+import Contract from '../models/Contract.js';
+import { productSchema } from '../contracts/product.schema.js';
 
 /**
  * Idempotently seeds the initial demo Endpoint and approved Contract.
@@ -52,7 +54,7 @@ async function seedDemoData(userId = null) {
 }
 
 // Allow direct execution from command line (e.g. npm run seed)
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   (async () => {
     try {
       await connectDB();
@@ -67,6 +69,7 @@ if (require.main === module) {
   })();
 }
 
-module.exports = {
+export {
   seedDemoData
 };
+export default seedDemoData;

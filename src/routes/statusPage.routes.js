@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import mongoose from 'mongoose';
+import { requireAuth } from '../middleware/auth.middleware.js';
+import { StatusPage, generateSlug } from '../models/StatusPage.js';
+import Endpoint from '../models/Endpoint.js';
+
 const router = express.Router();
-const mongoose = require('mongoose');
-const { requireAuth } = require('../middleware/auth.middleware');
-const { StatusPage, generateSlug } = require('../models/StatusPage');
-const Endpoint = require('../models/Endpoint');
 
 // Require authentication for all status-page management operations
 router.use(requireAuth);
@@ -279,4 +280,4 @@ router.post('/me/regenerate-slug', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

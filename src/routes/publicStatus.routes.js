@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { getPublicStatusData } from '../services/publicStatus.service.js';
+import { createRateLimiter } from '../middleware/rateLimiter.middleware.js';
+
 const router = express.Router();
-const { getPublicStatusData } = require('../services/publicStatus.service');
-const { createRateLimiter } = require('../middleware/rateLimiter.middleware');
 
 // Public status rate limiter: 60 requests per minute per IP
 const publicStatusRateLimiter = createRateLimiter({
@@ -49,5 +50,6 @@ router.get('/:slug', async (req, res, next) => {
 
 router.rateLimiter = publicStatusRateLimiter;
 
-module.exports = router;
+export { publicStatusRateLimiter };
+export default router;
 

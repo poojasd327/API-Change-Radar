@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 /**
@@ -94,4 +94,4 @@ router.get('/:id', async (req, res) => {
   return res.status(200).json(baseProduct);
 });
 
-module.exports = router;
+export default router;

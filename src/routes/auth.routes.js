@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import mongoose from 'mongoose';
+import User from '../models/User.js';
+import { generateToken, sanitizeUser } from '../services/auth.service.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const mongoose = require('mongoose');
-const User = require('../models/User');
-const { generateToken, sanitizeUser } = require('../services/auth.service');
-const { requireAuth } = require('../middleware/auth.middleware');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -164,4 +165,4 @@ router.post('/logout', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

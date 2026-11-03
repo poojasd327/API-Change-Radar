@@ -1,5 +1,6 @@
-const User = require('../models/User');
-const { verifyToken } = require('../services/auth.service');
+import mongoose from 'mongoose';
+import User from '../models/User.js';
+import { verifyToken } from '../services/auth.service.js';
 
 /**
  * Express middleware to authenticate requests via JWT Bearer token.
@@ -44,7 +45,7 @@ async function requireAuth(req, res, next) {
     }
 
     // Verify database connectivity
-    if (require('mongoose').connection.readyState !== 1) {
+    if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         error: 'ServiceUnavailable',
         message: 'Database connection is unavailable'
@@ -91,7 +92,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = {
+export {
   requireAuth,
   requireAdmin
 };

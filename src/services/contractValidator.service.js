@@ -1,4 +1,4 @@
-const Ajv = require("ajv");
+import Ajv from 'ajv';
 
 // Initialize Ajv with allErrors: true and relaxed strict mode for user-provided schemas
 const ajv = new Ajv({ allErrors: true, strict: false });
@@ -119,7 +119,7 @@ function inferSchemaFromSample(sampleData, title = "Inferred Schema") {
   };
 }
 
-module.exports = {
+export {
   validateSchemaStructure,
   validateSampleAgainstSchema,
   inferSchemaFromSample,

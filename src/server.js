@@ -1,8 +1,8 @@
-require('dotenv').config();
-const app = require('./app');
-const { connectDB, disconnectDB } = require('./config/db');
-const { seedDemoData } = require('./scripts/seed');
-const { startScheduler, stopScheduler } = require('./services/scheduler.service');
+import 'dotenv/config';
+import app from './app.js';
+import { connectDB, disconnectDB } from './config/db.js';
+import { seedDemoData } from './scripts/seed.js';
+import { startScheduler, stopScheduler } from './services/scheduler.service.js';
 
 const PORT = process.env.PORT || 5001;
 

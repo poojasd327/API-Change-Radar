@@ -1,13 +1,15 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const CheckRun = require('../src/models/CheckRun');
-const { seedDemoData } = require('../src/scripts/seed');
-const { productSchema } = require('../src/contracts/product.schema');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import CheckRun from '../src/models/CheckRun.js';
+import User from '../src/models/User.js';
+import { seedDemoData } from '../src/scripts/seed.js';
+import { productSchema } from '../src/contracts/product.schema.js';
+import { generateToken } from '../src/services/auth.service.js';
 
 test('Milestone 4: MongoDB Database Integration & Persistence Suite', async (t) => {
   let mongod;
@@ -19,8 +21,7 @@ test('Milestone 4: MongoDB Database Integration & Persistence Suite', async (t) 
   const mongoUri = mongod.getUri();
   await mongoose.connect(mongoUri);
 
-  const User = require('../src/models/User');
-  const { generateToken } = require('../src/services/auth.service');
+
 
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-12345';
   process.env.JWT_EXPIRES_IN = '1h';

@@ -1,9 +1,9 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const http = require('http');
-const { runProductCheck } = require('../src/services/detectionEngine.service');
-const { safeHttpRequest } = require('../src/services/ssrfProtection.service');
-const { productSchema } = require('../src/contracts/product.schema');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import { runProductCheck } from '../src/services/detectionEngine.service.js';
+import { safeHttpRequest } from '../src/services/ssrfProtection.service.js';
+import { productSchema } from '../src/contracts/product.schema.js';
 
 test('Milestone 7B: Outbound Request Security Hardening Suite', async (t) => {
   let server;

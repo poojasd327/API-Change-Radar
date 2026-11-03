@@ -1,20 +1,21 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/app');
-const Endpoint = require('../src/models/Endpoint');
-const Contract = require('../src/models/Contract');
-const Incident = require('../src/models/Incident');
-const CheckRun = require('../src/models/CheckRun');
-const User = require('../src/models/User');
-const { productSchema } = require('../src/contracts/product.schema');
-const {
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import app from '../src/app.js';
+import Endpoint from '../src/models/Endpoint.js';
+import Contract from '../src/models/Contract.js';
+import Incident from '../src/models/Incident.js';
+import CheckRun from '../src/models/CheckRun.js';
+import User from '../src/models/User.js';
+import { productSchema } from '../src/contracts/product.schema.js';
+import {
   recordIncidentFailure,
   resolveEndpointIncidents,
   formatIncidentTitle
-} = require('../src/services/incident.service');
-const { runScheduledChecks, stopScheduler } = require('../src/services/scheduler.service');
+} from '../src/services/incident.service.js';
+import { runScheduledChecks, stopScheduler } from '../src/services/scheduler.service.js';
+import { generateToken } from '../src/services/auth.service.js';
 
 test('Milestone 6, Step 2: Incident Service & Scheduler Integration Suite', async (t) => {
   let mongod;
@@ -303,7 +304,7 @@ test('Milestone 6, Step 2: Incident Service & Scheduler Integration Suite', asyn
   // --- 8. MANUAL CHECKS DO NOT CREATE INCIDENTS (BY DESIGN) ---
 
   await t.test('8. Manual check via POST /api/checks/mock-product records CheckRun but intentionally does NOT create incidents', async () => {
-    const { generateToken } = require('../src/services/auth.service');
+
 
     const testUser = await User.create({
       name: 'Manual Check Diagnostic User',

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const checkRunSchema = new mongoose.Schema(
   {
@@ -65,4 +65,5 @@ checkRunSchema.index({ userId: 1, endpoint: 1, checkedAt: -1 });
 
 const CheckRun = mongoose.model('CheckRun', checkRunSchema);
 
-module.exports = CheckRun;
+export { CheckRun };
+export default CheckRun;
